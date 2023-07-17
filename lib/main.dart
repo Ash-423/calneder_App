@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 double Swidth = 0  , Sheight  = 0;
 bool portrait = true ;
 String pagename = "weekly calnder" ;
+String Cname = "" ;
+DateTime? SDate  , EDate ;
 void main() {
   print("mainnn ");
   runApp( MyApp());
@@ -82,25 +84,27 @@ class FirstTimePage extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
+    Swidth =  kIsWeb ? 700 : MediaQuery.of(context).size.width;
+    Sheight = kIsWeb ? 1000 :  MediaQuery.of(context).size.height;
+    portrait = Swidth<Sheight ? true : false  ;
     // TODO: implement build
     return Scaffold(
         appBar: AppBar(
-          title : Text(title),),
+          title : Text(title ,style: TextStyle(fontSize :fontsize(context,0.045 , 0.035) ))),
 
         //foregroundColor: Colors.deepPurpleAccent,
         body :  Center(
-
             child :
             Column(mainAxisAlignment: MainAxisAlignment.center,
                 children : <Widget>[
-                  Text("you dont have any calender yet " , style: TextStyle(fontSize : 24 ) ),
-                  SizedBox (height : 20,),
+                  Text("you dont have any calender yet " , style: TextStyle(fontSize :fontsize(context,0.045 , 0.035) ) ),
+                  SizedBox (height : goodHeight(0.03, 0.03),),
                   SizedBox(
-                    width: 150,
-                    height : 40,
+                    width: goodWidth(0.3, 0.3),
+                    height : goodHeight(0.035, 0.08),
                     child :  FloatingActionButton(
                       onPressed: (){ printlog(context);},
-                      child: const Text("start a calender" , style: TextStyle(fontSize : 18 )),
+                      child:  Text("start a calender" , style: TextStyle(fontSize : fontsize(context, 0.035 , 0.03) )),
                     ),)]
 
             )));
@@ -116,7 +120,7 @@ class NewCalnder extends StatefulWidget {
 var values = ["","",""];
 class NewCalnderState extends State<NewCalnder>{
   //NewCalnderState({super.key});
-
+  final _formKey = GlobalKey<FormState>();
   final String title = "New Calnder";
   void printlog(con , entered ){
     print("i am here NewCalnder" + entered);
@@ -131,7 +135,7 @@ class NewCalnderState extends State<NewCalnder>{
     validate(con) ;
     bool good = true ;
     for (bool val in _validate ){
-      if(val){
+      if(!val){
         good = false ;
         break;}
     }
@@ -139,10 +143,10 @@ class NewCalnderState extends State<NewCalnder>{
       int i = 0 ;
       for(TextEditingController controller in myController){
         values[i] = controller.text ;
-        i++;
-      }
+        i++;}
+        Navigator.pushNamed(con, '/mainpage');
 
-      Navigator.pushNamed(con, '/mainpage');}
+      }
 
   }
   @override
@@ -155,36 +159,157 @@ class NewCalnderState extends State<NewCalnder>{
     //myController[i].text.isEmpty ? _validate[i] = true : _validate[i] = false;
     int i = 0 ;
     for(TextEditingController controller in myController){
-      controller.text.isEmpty ? _validate[i] = true : _validate[i] = false ;
+      controller.text.isEmpty ? _validate[i] = false : _validate[i] = true ;
+      print("pteto " + i.toString() + _validate[i].toString());
       i++; }
-    Navigator.pushNamed(con, '/mainpage');
+    //Navigator.pushNamed(con, '/mainpage');
   }
 
   bool wrote= false ;
   //Color c = Color.fromRGBO(153, 204, 255, 1.0);
   Widget build(BuildContext context) {
+    Swidth =  kIsWeb ? 700 : MediaQuery.of(context).size.width;
+    Sheight = kIsWeb ? 1000 :  MediaQuery.of(context).size.height;
+    portrait = Swidth<Sheight ? true : false  ;
     return Scaffold(
         appBar: AppBar(
           // backgroundColor: Theme.of(context).colorScheme,
           title : Text(title),),
-        body :  Center(
+
+      body :  Form(
+          key: _formKey,
+          child: Center (child : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              //SizedBox(height : goodHeight(0.03, 0.2)),
+              Text("Calender Name " ,style: TextStyle(fontSize : fontsize(context, 0.035  ,0.025)  ) ),
+
+               SizedBox(
+
+                   //alignment: Alignment.bottomRight,
+                height : goodHeight(0.08, 0.1),
+                width: goodWidth(0.5, 0.45),
+                child :
+              TextFormField(
+                controller: myController[0],
+                   maxLength : 15 ,
+                  decoration: InputDecoration(
+                    hintText: 'calender name',),
+                validator: (text) {
+                  if (text == null || text.isEmpty) {
+                    return 'calender name  cant be empty';
+                  }
+                  print("cnameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+                  Cname = text ;
+                  return null;
+                },
+              )),
+              Text("Start Date " ,style: TextStyle(fontSize : fontsize(context, 0.035  ,0.025)  ) ),
+              SizedBox(
+              //alignment: Alignment.bottomRight,
+              height : goodHeight(0.08, 0.1),
+              width: goodWidth(0.5, 0.45),
+              child :
+              TextFormField(
+                controller: myController[1] ,
+                  decoration: InputDecoration(
+                    hintText: 'Start date ',),
+                  validator: (text) {
+                    if (text == null || text.isEmpty) {
+                      return 'start date cant be empty';
+                    }
+                    return null;
+                  },
+                onTap: () async {
+                      SDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      //get today's date
+                      firstDate: DateTime(DateTime.now().year),
+                      //DateTime.now() - not to allow to choose before today.
+                      lastDate: DateTime(2030),
+                  );  if(SDate != null ){
+                    setState(() {
+                      myController[1].text = SDate.toString().substring(0,10); //set foratted date to TextField value.
+                    });
+                  }else{
+                    print("Date is not selected");
+                  }} ),),
+
+              Text("End Date " ,style: TextStyle(fontSize : fontsize(context, 0.035  ,0.025)  ) ),
+              SizedBox(
+                //alignment: Alignment.bottomRight,
+                height : goodHeight(0.08, 0.1),
+                width: goodWidth(0.5, 0.45),
+                child :
+                TextFormField(
+                    controller: myController[2] ,
+                    decoration: InputDecoration(
+                      hintText: 'End date ',),
+                    validator: (text) {
+                      if (text == null || text.isEmpty) {
+                        return 'End date cant be empty';
+                      }
+                      return null;
+                    },
+                    onTap: () async {
+                      EDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        //get today's date
+                        firstDate: DateTime(SDate!.year ,SDate!.month , SDate!.day ),
+                        //DateTime.now() - not to allow to choose before today.
+                        lastDate: DateTime(2030),
+                      );  if(EDate != null ){
+                        setState(() {
+                          myController[2].text = SDate.toString().substring(0,10); //set foratted date to TextField value.
+                        });
+                      }else{
+                        print("Date is not selected");
+                      }} ),),
+              // SizedBox(width : 390),
+              /*SizedBox(
+                height : goodHeight(0.08, 0.08),
+                width: goodWidth(0.5, 0.5),
+                child : TextField(
+                  maxLength: 25,
+                  controller: myController[0],
+                  decoration: InputDecoration(
+                      errorText: _validate[0] ? ' Value Cant Be Empty' : null,
+                      labelText:  'Enter the Value' ),
+                  //onTapOutside : (value){print("on complete edit");}
+                ),),*/
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    Navigator.pushNamed(context, '/mainpage');
+                  }
+                },
+                child: Text('Submit' ,style: TextStyle(fontSize : fontsize(context, 0.035  ,0.030)  ) ),
+              )
+            ],
+          ),
+          )),
+    );
+
+
+    /*Center(
             child : Column(
               //mainAxisAlignment : MainAxisAlignment.center ,
                 children : <Widget>[
-                  SizedBox(height : 150),
-                  Text("Calender Name :" ,style: TextStyle(fontSize : 18  ) ),
-                  SizedBox(width : 390),
+                  SizedBox(height : goodHeight(0.3, 0.2)),
+                  Text("Calender Name " ,style: TextStyle(fontSize : fontsize(context, 0.035  ,0.045)  ) ),
+                 // SizedBox(width : 390),
                   SizedBox(
-                    height : 55,
-                    width: 250,
+                    height : goodHeight(0.08, 0.08),
+                    width: goodWidth(0.5, 0.5),
                     child : TextField(
-
+                        maxLength: 25,
                         controller: myController[0],
                         decoration: InputDecoration(
-
                             errorText: _validate[0] ? ' Value Cant Be Empty' : null,
-                            labelText:  'Enter the Value' )
-
+                            labelText:  'Enter the Value' ),
+                        //onTapOutside : (value){print("on complete edit");}
                     ),),
                   // calender name
                   SizedBox(height : 20),
@@ -203,13 +328,13 @@ class NewCalnderState extends State<NewCalnder>{
                           labelText: "Enter start Date" //label text of field
                       ),
                       readOnly: true,  // when true user cannot edit text
-                      onTap: () async {
+                      Time(2101)
+                        );onTap: () async {
                         DateTime? pickedDate = await showDatePicker(
                             context: context,
                             initialDate: DateTime.now(), //get today's date
                             firstDate:DateTime(2000), //DateTime.now() - not to allow to choose before today.
-                            lastDate: DateTime(2101)
-                        );
+                            lastDate: Date
                         if(pickedDate != null ){
 
 
@@ -267,7 +392,7 @@ class NewCalnderState extends State<NewCalnder>{
                     child: Text('create'),
                   )
 
-                ])));
+                ])));*/
   }
 }
 
@@ -280,7 +405,7 @@ class mainpage extends StatefulWidget {
 class mainpageState extends State<mainpage>
     with TickerProviderStateMixin {
   late final TabController _tabController;
-  final String title = values[0];
+  final String title = Cname;
 
   @override
   void initState() {
@@ -302,7 +427,7 @@ class mainpageState extends State<mainpage>
     return Scaffold(
       appBar: AppBar(
 
-        title:  Text( pagename , style: TextStyle(fontSize : fontsize(context,0.045) ) ,  ),
+        title:  Text( pagename , style: TextStyle(fontSize : fontsize(context,0.045,0.045) ) ,  ),
         actions: [
           IconButton(
             icon:  Icon(Icons.settings ,size: goodWidth(0.058, 0.04) ),
@@ -346,18 +471,20 @@ class mainpageState extends State<mainpage>
     );
   }
 }
-double fontsize(BuildContext context , x ){return displayWidth(context) * x ;}
+double fontsize(BuildContext context , xp , xl  ){
+  double res =  portrait ? xp : xl ;
+  return displayWidth(context) * res ;}
 
 class weeklycalnder extends StatelessWidget {
   @override
   //static double Swidth = 0  , Sheight  = 0;
   //static bool portrait = true ;
-  final String title = values[0];
+  final String title = Cname;
 
   Widget build(BuildContext context) {
     pagename = "weekly calender" ;
-    Swidth =  kIsWeb ? 800 : MediaQuery.of(context).size.width;
-    Sheight = kIsWeb ? 1200 :  MediaQuery.of(context).size.height;
+    Swidth =  kIsWeb ? 700 : MediaQuery.of(context).size.width;
+    Sheight = kIsWeb ? 1000 :  MediaQuery.of(context).size.height;
     portrait = Swidth<Sheight ? true : false  ;
     print (portrait) ;
     return SingleChildScrollView(
@@ -402,7 +529,7 @@ class weeklycalnder extends StatelessWidget {
         Row(
           //mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children : [
-              Text(text , style: TextStyle(fontSize : fontsize(context,0.021) ,height:0.75, backgroundColor:  Theme.of(context).colorScheme.primary) , textAlign : TextAlign.left,) ,
+              Text(text , style: TextStyle(fontSize : fontsize(context,0.021,0.021) ,height:0.75, backgroundColor:  Theme.of(context).colorScheme.primary) , textAlign : TextAlign.left,) ,
               SizedBox(width :goodWidth(0.25, 0.25,width: width)),
               GestureDetector( onTap: () {print("add"); }, child: Icon(Icons.add_box_outlined , size : goodWidth(0.25, 0.28,width: width) ) )
 
@@ -427,7 +554,7 @@ class weeklycalnder extends StatelessWidget {
               border: Border(right: BorderSide(color: Color.fromRGBO(0, 0, 0, 1)))
           ),
           //color: Color.fromRGBO(160,220 , 220 + (i*5) , 1) ,
-          child :  Text(i.toString() , style: TextStyle(fontSize : fontsize(context,f) ), textAlign: TextAlign.left,))
+          child :  Text(i.toString() , style: TextStyle(fontSize : fontsize(context,f , f) ), textAlign: TextAlign.left,))
       ;
     } //number of weeks
 
@@ -439,7 +566,7 @@ class weeklycalnder extends StatelessWidget {
               border: Border(bottom: BorderSide(color: Color.fromRGBO(0, 0, 0, 1)))
           ),
           //color: Color.fromRGBO(160,220 , 220 + (i*5) , 1) ,
-          child : Center (child : Text(text , style: TextStyle(fontSize : fontsize(context,0.04) )))
+          child : Center (child : Text(text , style: TextStyle(fontSize : fontsize(context,0.04,0.04) )))
       );
     } // week days blocks
 
@@ -462,7 +589,7 @@ class weeklycalnder extends StatelessWidget {
     //double fontsize = displayWidth(context) * 0.04;
 
     List<Widget> rows = [
-      Text( title + "calender"  , style: TextStyle(fontSize : fontsize(context,0.05) ), textAlign: TextAlign.right,),
+      Text( Cname + " calender"  , style: TextStyle(fontSize : fontsize(context,0.05,0.05) ), textAlign: TextAlign.right,),
       SizedBox( height : (Sheight*0.03)  ),
       Row(// titels and week days
         //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
