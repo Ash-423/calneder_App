@@ -1,15 +1,34 @@
 
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
 //import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'DataBase.dart';
 //import 'package:intl/intl_browser.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 double Swidth = 0  , Sheight  = 0;
 bool portrait = true ;
 String pagename = "weekly calnder" ;
 String Cname = "" ;
 DateTime? SDate  , EDate ;
-void main() {
-  print("program started ");
+
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+ // FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+
+  //await Firebase.initializeApp(
+    //options: DefaultFirebaseOptions.currentPlatform,
+  //);
+ print("program started ");
   runApp( MyApp());
 }
 
@@ -37,12 +56,18 @@ double iconsize(wP , wL ,{height = 0 , width = 0 } ){
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-  bool firsttime = false ;
+  //bool firsttime = true ;
+  Future<bool> isFirstTime() async {
+    int CCount = await FirebaseFirestore.instance.collection('Calenders').snapshots().length;
+    print( "counnnt "+ CCount.toString() );
+    return  CCount > 0 ;
+
+  }
   // This widget is the root of your application.
 
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)  {
+    bool ft = isFirstTime() as bool;
     return MaterialApp(
       title: 'calender',
       theme: ThemeData(
@@ -53,11 +78,12 @@ class MyApp extends StatelessWidget {
               backgroundColor: Color.fromRGBO(123, 189, 255, 1)
             //color: Theme.of(context).colorScheme.onTertiary),
           )),
-      initialRoute: firsttime ? '/FirstTimePage' : '/mainpage' ,
+      initialRoute:  ft  ? '/FirstTimePage' : '/mainpage' ,
       routes: {
         '/FirstTimePage': (context) => const FirstTimePage(),
         '/NewCalnder': (context) => const NewCalnder(),
         '/mainpage': (context) =>  mainpage(),
+        '/AList': (context) =>  AList(),
         //'/third': (context) => const ThirdRoute(),
       },
       // home: FirstTimePage(),
@@ -205,7 +231,7 @@ class NewCalnderState extends State<NewCalnder>{
                         lastDate: DateTime( DateTime.now().year + 1),
                       );  if(EDate != null ){
                         setState(() {
-                          myController[2].text = SDate.toString().substring(0,10); //set foratted date to TextField value.
+                          myController[2].text = EDate.toString().substring(0,10); //set foratted date to TextField value.
                         });
                       }else{
 
@@ -214,6 +240,11 @@ class NewCalnderState extends State<NewCalnder>{
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
+                    //var c =  calenders( Cid : 0 ,Cname: Cname, Sdate: SDate.toString().substring(0,10), Edate: EDate.toString().substring(0,10));
+                    //insertcalenders(c);
+
+                    var c = Calenders(0,Cname, Timestamp.fromDate(SDate!), Timestamp.fromDate(EDate!));
+                    c.addcalender();
                     Navigator.pushNamed(context, '/mainpage');
                   }
                 },
@@ -241,7 +272,7 @@ class mainpageState extends State<mainpage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -279,6 +310,9 @@ class mainpageState extends State<mainpage>
           Tab(
           icon: Icon(Icons.check_circle_outline_sharp ,size: goodWidth(0.058, 0.04)),
           ),
+          Tab(
+           icon: Icon(Icons.menu_book_sharp ,size: goodWidth(0.058, 0.04)),
+            )
           ],
           ),
             //bottomNavigationBar :
@@ -289,10 +323,12 @@ class mainpageState extends State<mainpage>
         controller: _tabController,
         children: [
           weeklycalnder(),
-          schedule(),
           Center(
-            child: Text(Sheight.toString()),
-          ),
+          child: Text("schedule skippoooo" , style: TextStyle( fontSize: 30 ),) ) ,
+          TodoLists(),
+          Subjects() ,
+
+
         ],
       ),
     );
@@ -404,21 +440,231 @@ class weeklycalnder extends StatelessWidget {
       ));
     }
 
-
+   /* rows.add( FloatingActionButton.large(
+      onPressed: (){},
+      child: Icon(Icons.add , size : 70 ),
+    ));*/
     return rows;
   }}
-
-class schedule  extends StatelessWidget {
+String Listtitle = "To Do list ";
+String Stitle = "To Do list ";
+class TodoLists extends StatelessWidget {
   @override
+  final String title = "todolist ";
+
+  bool isnolists = false ;
+
   Widget build(BuildContext context) {
-    // TODO: implement build
-    print("bulid schedule");
-  pagename = "schedule";
-  return SingleChildScrollView(
-      child:  Container(
-  child : Text("hi ")));
+    pagename = "To Do list ";
+    Swidth = kIsWeb ? 700 : MediaQuery.of(context).size.width;
+    Sheight = kIsWeb ? 1000 : MediaQuery.of(context).size.height;
+    portrait = Swidth < Sheight ? true : false;
+    return SingleChildScrollView(
+        child: Container(
+          height: Sheight - 130 ,
+          color: Theme
+              .of(context)
+              .colorScheme
+              .onTertiary,
+
+          child: isnolists ? nolists(context) : Llists(context,) ,
+
+        ));
   }
 
+  Widget nolists(BuildContext context){
+
+
+    List<Widget> w = [  Center(
+        child :
+        Column(mainAxisAlignment: MainAxisAlignment.center,
+            children : <Widget>[
+              Text("you dont have any to do lists yet " , style: TextStyle(fontSize :fontsize(context,0.045 , 0.035) ) ),
+              SizedBox (height : goodHeight(0.03, 0.03),),
+              SizedBox(
+                //width: goodWidth(0.3, 0.3),
+                //height : goodHeight(0.035, 0.08),
+                child :  FloatingActionButton(
+                  onPressed: (){ Navigator.pushNamed(context, '/NewCalnder');},
+                  child : Icon(Icons.add , size : 55 ),
+
+                ),)]
+
+        )) ];
+
+    return  Center(child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: w ));
+
+  }
+
+  Widget Llists(BuildContext context) {
+    List<Widget> lists = [Text("TO Do Lists  " , textAlign: TextAlign.left,style: TextStyle(fontSize: goodWidth(0.04, 0.04))) ,
+      SizedBox(height: goodHeight(0.03, 0.3),)] ;
+    var Lname = "list  " ;
+    for(int i = 0 ; i < 4;i++){
+    lists.add(listblocks(context , Lname + i.toString()));
+    lists.add(SizedBox(height: goodHeight(0.02, 0.02)));}
+    lists.add(FloatingActionButton(
+      onPressed: (){ },
+      child : Icon(Icons.add , size : 55 ),));
+    return   Column(
+        //mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: lists );
+
+  }
+  Widget listblocks(BuildContext context ,String Lname){
+    return GestureDetector(
+        onTap: (){
+          print("pressed");
+        Listtitle = Lname;
+          Navigator.pushNamed(context, '/AList');
+    },
+    child:Container(
+      decoration: BoxDecoration(color : Color.fromRGBO(87, 162, 234, 1.0), borderRadius: BorderRadius.circular(20)),
+      width: Swidth-30,
+      height: 50,
+
+      child: Text(Lname , textAlign: TextAlign.center,style: TextStyle(fontSize: goodWidth(0.04, 0.04)),),
+    ));
+
+  }
+}
+class AList extends StatefulWidget {
+  const AList({super.key});
+
+  @override
+  State<AList> createState() => AListState();
+}
+
+class AListState extends State<AList> {
+  @override
+
+ // AList(String t){this.title = t ; }
+  Map<String, bool> values = {
+    'foo': false,
+    'bar': false,
+    'pteto' : false
+  };
+
+  Widget build(BuildContext context) {
+    print("bulid ");
+    return Scaffold(
+        appBar: AppBar(
+            title: Text(Listtitle ,style : TextStyle(fontSize : fontsize(context,0.045,0.045) )  )
+        ),
+        body:tasks(),
+        floatingActionButton: FloatingActionButton.large(
+          onPressed: (){},
+          child: Icon(Icons.add , size : 70 ),
+        ),
+
+
+
+    );
+  }
+
+  ListView tasks(){
+    return ListView(
+      children: values.keys.map((String key) {
+        return  CheckboxListTile(
+          title:  Text(key, style : TextStyle(fontSize : fontsize(context,0.035,0.035) ) ),
+          value: values[key],
+          onChanged: (bool? value) {
+            setState(() {
+              values[key] = value!;
+              List<MapEntry<String, bool>> w = values.entries.toList();
+              w.sort((a, b) => a.value ? 1 : -1);
+              values = Map.fromEntries(w);
+            }
+            );
+          },
+        );
+      }//return SizedBox() ; }
+      ).toList(),
+    );
+  }
+}
+
+
+class Subjects extends StatelessWidget {
+  @override
+  final String title = "Subjects ";
+
+  bool isnoSubjects = false ;
+
+  Widget build(BuildContext context) {
+      pagename = "To Do list ";
+      Swidth = kIsWeb ? 700 : MediaQuery.of(context).size.width;
+      Sheight = kIsWeb ? 1000 : MediaQuery.of(context).size.height;
+      portrait = Swidth < Sheight ? true : false;
+      return SingleChildScrollView(
+          child: Container(
+            height: Sheight - 130 ,
+            color: Theme
+                .of(context)
+                .colorScheme
+                .onTertiary,
+
+            child: isnoSubjects ? noSubjects(context) : LSubjects(context,) ,
+
+          ));
+
+  }
+
+  noSubjects(BuildContext context) {
+
+    List<Widget> w = [  Center(
+        child :
+        Column(mainAxisAlignment: MainAxisAlignment.center,
+            children : <Widget>[
+              Text("you dont have any Subjects yet " , style: TextStyle(fontSize :fontsize(context,0.045 , 0.035) ) ),
+              SizedBox (height : goodHeight(0.03, 0.03),),
+              SizedBox(
+                //width: goodWidth(0.3, 0.3),
+                //height : goodHeight(0.035, 0.08),
+                child :  FloatingActionButton(
+                  onPressed: (){ Navigator.pushNamed(context, '/NewCalnder');},
+                  child : Icon(Icons.add , size : 55 ),
+
+                ),)]
+
+        )) ];
+
+    return  Center(child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: w ));
+
+  }
+  LSubjects(BuildContext context) {
+   return Column(
+       children : [Text("subject : "),  SizedBox(height: goodHeight(0.05, 0.05)) , Row(
+     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [   subjectblocks(context , "math "),subjectblocks(context , "swe "),]
+   ),
+     SizedBox(height: goodHeight(0.05, 0.05),)    ,Row(
+   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [   subjectblocks(context , "math "),subjectblocks(context , "swe "),]
+    )]);
+
+
+  }
+  Widget subjectblocks(BuildContext context ,String Sname){
+    return GestureDetector(
+        onTap: (){
+          print("pressed");
+          Stitle = Sname;
+          Navigator.pushNamed(context, '/AList');
+        },
+        child:Container(
+          decoration: BoxDecoration(color : Color.fromRGBO(87, 162, 234, 1.0), borderRadius: BorderRadius.circular(20)),
+          width: goodWidth(0.3, 0.1),
+          height: goodHeight(0.2, 0.2),
+
+          child: Text(Sname , textAlign: TextAlign.center,style: TextStyle(fontSize: goodWidth(0.04, 0.04)),),
+        ));
+
+  }
 }
 
 
