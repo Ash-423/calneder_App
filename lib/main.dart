@@ -56,18 +56,40 @@ double iconsize(wP , wL ,{height = 0 , width = 0 } ){
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-  //bool firsttime = true ;
-  Future<bool> isFirstTime() async {
-    int CCount = await FirebaseFirestore.instance.collection('Calenders').snapshots().length;
+  bool firsttime = true ;
+  void isFirstTime() async {
+    print("inside  fun ");
+    int CCount = 0;//await FirebaseFirestore.instance.collection('Calenders').snapshots().length;
     print( "counnnt "+ CCount.toString() );
-    return  CCount > 0 ;
-
+    firsttime = CCount <= 0 ? true : false  ;
+    print("woooooo we printed " + firsttime.toString());
+     // return ;
   }
   // This widget is the root of your application.
+Future<void> readC() async {
+print("readc");
+// Assuming you have a collection called "users" and a document with ID "user1"
 
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('Calenders').get();
+
+  if (querySnapshot.docs.isNotEmpty) {
+    querySnapshot.docs.forEach((doc) {
+      // Document data is available in doc.data() Map
+      print('Document data: ${doc.data()}');
+    });
+  } else {
+    print('No documents found in the collection.');
+  }
+// Get the document
+
+}
   @override
   Widget build(BuildContext context)  {
-    bool ft = isFirstTime() as bool;
+    //bool ft = true ;
+    print("before fun ");
+    readC();
+    isFirstTime();
+    print("after fun ");
     return MaterialApp(
       title: 'calender',
       theme: ThemeData(
@@ -78,7 +100,7 @@ class MyApp extends StatelessWidget {
               backgroundColor: Color.fromRGBO(123, 189, 255, 1)
             //color: Theme.of(context).colorScheme.onTertiary),
           )),
-      initialRoute:  ft  ? '/FirstTimePage' : '/mainpage' ,
+      initialRoute:  firsttime  ? '/FirstTimePage' : '/mainpage' ,
       routes: {
         '/FirstTimePage': (context) => const FirstTimePage(),
         '/NewCalnder': (context) => const NewCalnder(),
