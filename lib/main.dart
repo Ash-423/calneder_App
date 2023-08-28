@@ -11,7 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 double Swidth = 0  , Sheight  = 0;
 bool portrait = true ;
-String pagename = "weekly calnder" ;
+String pagename = "weekly calnderrrr" ;
 String Cname = "" ;
 DateTime SDate =DateTime(2003) , EDate=DateTime(2003)  ;
 DateTime? SDatepick ,  EDatepick;
